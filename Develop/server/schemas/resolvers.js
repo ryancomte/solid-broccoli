@@ -1,15 +1,15 @@
 const { AuthenticationError } = require('apollo-server-express');
 
-const { User, Book } = require('../models');
+const { User } = require('../models');
 const { signToken } = require('../utils/auth');
 
 const resolvers = {
   Query: {
     me: async (parent, args, context) => {
       if (context.user) {
-        const userData = await User.findOne({})
+        const userData = await User.findOne({ _id: context.user._id })
           .select('-__v -password')
-          .populate('savedBooks');
+          .populate('save');
 
         return userData;
       }
@@ -43,33 +43,28 @@ const resolvers = {
     },
     saveBook: async (parent, args, context) => {
       if (context.user) {
-        const book = await Book.create({
-          ...args,
-          username: context.user.username,
-        });
-
         const updatedUser = await User.findOneAndUpdate(
           {
             _id: context.user._id,
           },
-          { $addToSet: { books: book } },
-          { new: true }
-        ).populate('books');
+          { $push: { savedBooks: args.input } },
+          { new: true, runValidators: true }
+        ).populate('savedBooks');
 
         return updatedUser;
       }
     },
-    removeBook: async (parent, { bookId }) => {
+    removeBook: async (parent, { id }, context) => {
       if (context.user) {
-        const updateUser = await User.findOneAndUpdate(
+        const updatedUser = await User.findOneAndUpdate(
           {
             _id: context.user._id,
           },
-          { $pull: { books: { _id: bookId } } },
-          { multi: false }
+          { $pull: { savedBooks: { bookId: id } } },
+          { new: true }
         );
 
-        return updateUser;
+        return updatedUser;
       }
     },
   },
