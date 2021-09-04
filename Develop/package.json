@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "description": "",
   "main": "server/server.js",
+  "proxy": "http://localhost:8000",
+  "engines": {
+    "node": ">= 16.6.1",
+    "npm": ">= 6.14.13"
+  },
   "scripts": {
     "start": "if-env NODE_ENV=production && npm run start:prod || npm run start:dev",
     "start:prod": "cd server && npm start",
